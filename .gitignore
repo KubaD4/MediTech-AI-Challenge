@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Modelli
+*.pth
+*.ckpt
+*.h5
+*.pkl
+
+# Medical files 
+*.nrrd
+
+# Data
+data/*
+!data/.gitkeep
