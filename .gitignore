@@ -21,6 +21,10 @@ Thumbs.db
 
 # Medical files 
 *.nrrd
+*.nii
+*.nii.gz
+*.gz
+*.png
 
 # Data
 data/*
