@@ -56,12 +56,15 @@ except ImportError:
 # Configuration  (paths unchanged from original)
 # ---------------------------------------------------------------------------
 
-BASE_DIR   = os.path.expanduser("~/Desktop/Challange1")
-MASKED_DIR = os.path.join(BASE_DIR, "results/masked_scans_V")
-SEG_DIR    = os.path.join(BASE_DIR, "results/total_segmentator_type_V")
-OUT_DIR    = os.path.join(BASE_DIR, "results/normalized_scans_V")
-STATS_DIR  = os.path.join(BASE_DIR, "results/normalization_stats")
-PLOT_DIR   = os.path.join(BASE_DIR, "results/normalization_plots")
+WORK_DIR = os.getcwd() 
+
+WORK_DIR = os.getcwd()
+
+MASKED_DIR = os.path.join(WORK_DIR, "masked_scans_V")
+SEG_DIR    = os.path.join(WORK_DIR, "segmentatorResultsVfiles")
+OUT_DIR    = os.path.join(WORK_DIR, "normalized_scans_V")
+STATS_DIR  = os.path.join(WORK_DIR, "normalization_stats")
+PLOT_DIR   = os.path.join(WORK_DIR, "normalization_plots")
 
 MASK_VALUE = -1000  # background tag, same as masking_runner.py
 

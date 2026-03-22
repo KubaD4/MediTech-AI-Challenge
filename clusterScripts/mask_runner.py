@@ -13,10 +13,8 @@ import glob
 import logging
 import numpy as np
 import nibabel as nib
+import concurrent.futures
 
-# ---------------------------------------------------------------------------
-# Configurazione Percorsi
-# ---------------------------------------------------------------------------
 # ---------------------------------------------------------------------------
 # Configurazione Percorsi (Cluster Version)
 # ---------------------------------------------------------------------------
@@ -82,7 +80,17 @@ def mask_outside_window(vol, axis, lo, hi, val):
 
 def process_patient(patient_folder_name: str):
     """Esegue la pulizia per un singolo paziente (es. 'pz001')"""
+
+    # ---> RESUME CHECK <---
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out_filename = f"{patient_folder_name}_V_masked.nii.gz"
+    out_path = os.path.join(OUT_DIR, out_filename)
     
+    if os.path.exists(out_path):
+        log.info(f"[{patient_folder_name}] Masked file already exists. Skipping!")
+        return
+    # ----------------------
+
     path_pz = os.path.join(SCAN_DIR, patient_folder_name)
     
     # 1. Identifica il file CT di tipo V
@@ -93,10 +101,8 @@ def process_patient(patient_folder_name: str):
     ct_path = v_scans[0]
     
     # 2. Trova la cartella segmentazione corrispondente
-    # Estraiamo il numero dal nome della cartella (es. 'pz016' -> '016')
     patient_id_num = "".join(filter(str.isdigit, patient_folder_name))
     
-    # Cerchiamo in SEG_DIR una cartella che contenga quel numero (es. '..._016_..._V')
     all_seg_folders = [d for d in os.listdir(SEG_DIR) if os.path.isdir(os.path.join(SEG_DIR, d))]
     target_seg_folder = None
     for folder in all_seg_folders:
@@ -148,13 +154,10 @@ def process_patient(patient_folder_name: str):
             total_struct_masked += int(idxs.sum())
 
     # --- SALVATAGGIO ---
-    os.makedirs(OUT_DIR, exist_ok=True)
-    out_filename = f"{patient_folder_name}_V_masked.nii.gz"
-    out_path = os.path.join(OUT_DIR, out_filename)
-    
     masked_img = nib.Nifti1Image(vol, ct_img.affine, ct_img.header)
     nib.save(masked_img, out_path)
     log.info(f"Completato! Salvato in: {out_path}")
+
 
 def main():
     if not os.path.exists(SCAN_DIR):
@@ -169,12 +172,23 @@ def main():
         return
 
     log.info(f"Trovati {len(patients)} pazienti da processare.")
+    log.info("Avvio del Multiprocessing su 4 CPU...")
 
-    for p in patients:
-        try:
-            process_patient(p)
-        except Exception as e:
-            log.error(f"Errore critico durante il processamento di {p}: {e}")
+    # Usa ProcessPoolExecutor per lanciare 4 pazienti contemporaneamente!
+    # Nota: impostiamo max_workers=4 perché hai richiesto --cpus-per-task=4 in SLURM
+    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        # Questo invierà la lista dei pazienti ai 4 core. 
+        # Man mano che un core finisce, prende automaticamente il paziente successivo!
+        futures = {executor.submit(process_patient, p): p for p in patients}
+        
+        for future in concurrent.futures.as_completed(futures):
+            p = futures[future]
+            try:
+                future.result() # Controlla se ci sono stati errori
+            except Exception as e:
+                log.error(f"Errore critico durante il processamento di {p}: {e}")
+
+    log.info("Tutti i pazienti completati!")
 
 if __name__ == "__main__":
     main()
