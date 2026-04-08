@@ -6,10 +6,11 @@ import os
 import sys
 import slicer
 
-from CurvedPlanarReformat import CurvedPlanarReformatLogic
-import SegmentStatistics 
+# from CurvedPlanarReformat import CurvedPlanarReformatLogic
 
-from slicer.util import getNode, arrayFromVolume, arrayFromSegmentBinaryLabelmap, updateSegmentBinaryLabelmapFromArray
+# import SegmentStatistics 
+
+from slicer.util import getNode, arrayFromVolume, arrayFromSegmentBinaryLabelmap, updateSegmentBinaryLabelmapFromArray, updateVolumeFromArray
 
 
 import csv
@@ -992,6 +993,22 @@ class SegmentEditorManager:
         slicer.mrmlScene.RemoveNode(labelmap_node)
 
         return True 
+
+class AortaProcessor:
+    """
+    Only for aorta processing: extraction, cleaning, normalization...
+    """
+    def __init__(self, ct_volume_node):
+            self.ct_node = ct_volume_node
+
+            self.logger = logging.getLogger(self.__class__.__name__)
+
+    @log_method_call
+    def extract_aorta_region(self, aorta_segemntation_node):
+        """
+        Input: node of the arota segmentation (TotalSegmentator result)
+        Output: new CT volume containing only interested area (the rest is set to -1000 HU)
+        """
 
 
 def hide_scene():
